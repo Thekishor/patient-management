@@ -1,6 +1,6 @@
 # Patient Management System - Microservices Architecture
 
-This is a **production-grade Patient Management System**, built using real-world microservices principles. It uses Spring Boot, Kafka (KRaft), gRPC, Docker, and LocalStack to simulate scalable and secure healthcare backend operations.
+This is a **production-grade Patient Management System**, built using real-world microservices principles. It uses Spring Boot, Kafka (KRaft), gRPC, Docker, and LocalStack to simulate scalable and secure patient-management backend operations.
 
 Designed for modularity, service communication, infrastructure simulation, and local cloud emulation using LocalStack, this system handles core patient data processing in a realistic cloud-native development environment — without deploying to actual AWS.
 
