@@ -43,8 +43,9 @@ patient-management/
 |---------------------|----------------------|------------|----------------------------------------|
 | Postman             | API Gateway          | HTTP       | Entry point for all requests           |
 | API Gateway         | Auth / Patient       | HTTP       | Routes incoming requests               |
-| Patient Service     | Analytics Service    | Kafka      | Publishes patient events               |
+| Patient Service     | Analytics Service    | Kafka      | Publishes patient events (Kafka Producer               |
 | Analytics Service   | Kafka                | Kafka      | Consumes and processes analytics data  |
+| Billing Service     | Kafka                | Kafka      | Kafka-Consumer   |
 
 ---
 
@@ -55,7 +56,7 @@ patient-management/
 | Language         | Java (Spring Boot), Bash                      |
 | Inter-service    | gRPC, Kafka                                   |
 | Messaging Queue  | Apache Kafka (KRaft Mode)                     |
-| Security         | JWT Token, Role-based Access                  |
+| Security         | JWT Token                                     |
 | Cloud Emulation  | LocalStack (AWS S3, SNS)                      |
 | DevOps Tools     | Docker, Docker Compose                        |
 | Infra as Code    | AWS CDK (Java)                                |
@@ -120,6 +121,7 @@ bash localstack-deploy.sh
 | auth-service         | Yes    | 4003          |
 | patient-service      | Yes    | 4000          |
 | analytics-service    | Yes    | 4002          |
+| billing-service      | Yes    | 4001, 9001    |
 | infrastructure       | Not required as a service |
 | integration-test     |  Not required   |
 
@@ -128,7 +130,6 @@ bash localstack-deploy.sh
 ## Future Improvements
 
 - OAuth2 Authorization Integration
-- Monitoring with Prometheus & Grafana
 - CI/CD Integration (Jenkins or GitHub Actions)
 - Circuit Breaker Implementation (Resilience4j)
 
