@@ -1,19 +1,21 @@
 # Patient Management System - Microservices Architecture
 
-This is a full-stack, production-grade **Microservices-based Patient Management System** designed for scalable healthcare operations. It leverages Java Spring Boot, Docker, Kafka, gRPC, and LocalStack for AWS emulation.
+This is a **production-grade Patient Management System**, built using real-world microservices principles. It uses Spring Boot, Kafka (KRaft), gRPC, Docker, and LocalStack to simulate scalable and secure healthcare backend operations.
+
+Designed for modularity, service communication, infrastructure simulation, and local cloud emulation using LocalStack, this system handles core patient data processing in a realistic cloud-native development environment — without deploying to actual AWS.
 
 ---
 
 ## Features Overview
 
-- ✅ **Microservices Architecture** with Spring Boot
-- ✅ **API Gateway** for central entry point
-- ✅ **gRPC Communication** between services
-- ✅ **Kafka** integration for real-time event streaming
-- ✅ **LocalStack** to emulate AWS (S3, SNS, etc.)
-- ✅ **Dockerized** for local development
-- ✅ **Security with Auth Service (JWT based)**
-- ✅ **Scalable & Modular** codebase
+- **Microservices Architecture** with Spring Boot
+- **API Gateway** for centralized routing
+- **gRPC Communication** for inter-service calls
+- **Kafka Integration** for real-time event streaming
+- **LocalStack** to emulate AWS services (S3, SNS, etc.) locally
+- **Dockerized** for isolated, reproducible local development
+- **Security with Auth Service (JWT-based)**
+- **Scalable & Modular** codebase for enterprise expansion
 
 ---
 
@@ -22,35 +24,27 @@ This is a full-stack, production-grade **Microservices-based Patient Management 
 ```
 patient-management/
 │
-├── api-gateway/             # Central API Gateway
-├── analytics-service/       # Kafka consumer for analytical insights
-├── auth-service/            # Handles login, JWT, and authorization
-├── billing-service/         # Handles billing via gRPC server
-├── infrastructure/          # LocalStack infra using AWS CDK
-│   ├── cdk.out/             # Synthesized CloudFormation templates
-│   └── src/                 # CDK code (Java)
-├── integration-test/        # Integration tests
-├── patient-service/         # Core business logic + Kafka producer + gRPC client
-├── docker-compose.yaml      # Starts all services
-└── README.md
+├── api-gateway/             # Gateway for routing service requests
+├── auth-service/            # Handles authentication (JWT)
+├── patient-service/         # Core service managing patient data
+├── analytics-service/       # Kafka consumer for insights
+├── infrastructure/          # AWS CDK infra (LocalStack)
+├── integration-test/        # Tests cross-service functionality
+└── docker-compose.yaml      # Brings up the system stack
 ```
 
 ---
 
-##  Microservice Interaction
+## Microservice Interaction
 
-![Development Architecture]
+### Communication Flow
 
-### Communication Flow:
-
-| Source             | Target              | Protocol   | Description                            |
-|--------------------|---------------------|------------|----------------------------------------|
-| Postman            | API Gateway         | HTTP       | Entry point for all requests           |
-| API Gateway        | Auth/Patient Service| HTTP       | Routes requests                        |
-| Patient Service    | Billing Service     | gRPC       | Service-to-service remote calls        |
-| Patient Service    | Kafka               | Kafka      | Publishes patient events               |
-| Analytics Service  | Kafka               | Kafka      | Consumes and processes analytics data  |
-| Notification Service| Kafka              | Kafka      | Consumes for alerts or updates         |
+| Source              | Target               | Protocol   | Description                            |
+|---------------------|----------------------|------------|----------------------------------------|
+| Postman             | API Gateway          | HTTP       | Entry point for all requests           |
+| API Gateway         | Auth / Patient       | HTTP       | Routes incoming requests               |
+| Patient Service     | Analytics Service    | Kafka      | Publishes patient events               |
+| Analytics Service   | Kafka                | Kafka      | Consumes and processes analytics data  |
 
 ---
 
@@ -59,12 +53,12 @@ patient-management/
 | Category         | Tech Stack                                    |
 |------------------|-----------------------------------------------|
 | Language         | Java (Spring Boot), Bash                      |
-| Inter-service    | gRPC, Kafka                                    |
-| Messaging Queue  | Apache Kafka (KRaft Mode)                      |
-| Security         | JWT Token, Role-based access                  |
-| Cloud Emulation  | LocalStack (AWS S3, SNS)                       |
-| DevOps Tools     | Docker, Docker Compose                         |
-| Infra as Code    | AWS CDK                                        |
+| Inter-service    | gRPC, Kafka                                   |
+| Messaging Queue  | Apache Kafka (KRaft Mode)                     |
+| Security         | JWT Token, Role-based Access                  |
+| Cloud Emulation  | LocalStack (AWS S3, SNS)                      |
+| DevOps Tools     | Docker, Docker Compose                        |
+| Infra as Code    | AWS CDK (Java)                                |
 
 ---
 
@@ -72,28 +66,34 @@ patient-management/
 
 ### Prerequisites
 
-- JDK 21
-- Maven 3.9.9
-- Docker & Docker Compose
-- Kafka (via Docker)
-- LocalStack
+Ensure the following are installed:
+
+- [Java 21+](https://openjdk.java.net/)
+- [Maven 3.9.9+](https://maven.apache.org/)
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- [LocalStack](https://app.localstack.cloud)
 
 ---
 
 ### Running the Project
 
-#### 1. Clone the repo
+#### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/Thekishor/patient-management.git
 cd patient-management
 ```
 
-#### 2. Start Kafka and Services
+#### 2. Start Kafka and All Services
+
 ```bash
 docker-compose up --build
 ```
 
-#### 3. Deploy AWS Infra (LocalStack)
+#### 3. Deploy AWS Infrastructure via LocalStack
+
 ```bash
 cd infrastructure
 bash localstack-deploy.sh
@@ -101,45 +101,36 @@ bash localstack-deploy.sh
 
 ---
 
-### 🔪 Testing Strategy
+## Testing Strategy
 
-| Type               | Status        | Tools          |
-|--------------------|---------------|----------------|
-| Unit Tests         | Implemented in services |
-| Integration Tests  | (`integration-test` module) |
-| Load Testing       |  Pending      |
+| Type               | Status        | Tools                      |
+|--------------------|---------------|----------------------------|
+| Unit Tests         | Implemented per service |
+| Integration Tests  | Via `integration-test` module |
+| Load Testing       | Pending      |
 | Contract Testing   | Pending      |
 
 ---
 
-## 📦 Docker Images
+## Dockerized Services
 
-| Service              | Dockerized | Port  |
-|----------------------|------------|-------|
-| api-gateway          | ✅          | 4004  |
-| auth-service         | ✅          | 4003  |
-| billing-service      | ✅          | 4001, 9001  |
-| patient-service      | ✅          | 4000 |
-| analytics-service    | ✅          | 4002 |
-| infrastructure       | ❌ (Not required) |
-| integration-test     | ❌ (Planned) |
-
----
+| Service              | Dockerized | Ports         |
+|----------------------|------------|---------------|
+| api-gateway          | Yes    | 4004          |
+| auth-service         | Yes    | 4003          |
+| patient-service      | Yes    | 4000          |
+| analytics-service    | Yes    | 4002          |
+| infrastructure       | Not required as a service |
+| integration-test     |  Not required   |
 
 ---
 
 ## Future Improvements
 
-- OAuth2
-- 
+- OAuth2 Authorization Integration
+- Monitoring with Prometheus & Grafana
+- CI/CD Integration (Jenkins or GitHub Actions)
+- Circuit Breaker Implementation (Resilience4j)
+
 ---
-
-Ensure the following are installed on your local machine:
-
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [Java 21 or higher](https://openjdk.java.net/)
-- [Maven](https://maven.apache.org/) for building Spring Boot applications
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- [Local Stack](https://app.localstack.cloud)
 
