@@ -1,0 +1,49 @@
+server:
+  port: 4004
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        ## http://localhost:4004/auth/login
+        ## API GATEWAY -> https://auth-service:4003/login
+        - id: auth-service
+          uri: http://auth-service:4003
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=1
+        ## Incoming request: http://gateway/api/patients/123
+        #The filter removes the /api prefix (because strip-prefix=1 is configured).
+        #The resulting forwarded URL: http://patient-service:4000/patients/123
+        - id: patient-service
+          uri: http://patient-service:4000
+          predicates:
+            - Path=/api/patients/**
+          filters:
+            - StripPrefix=1
+            - JwtValidation
+
+        ## Rest client -> http://localhost:4004/api-docs/patients
+        ## Api gateway -> http://patient-service:4004/v3/api-docs
+        - id: api-docs-patient
+          uri: http://patient-service:4000
+          predicates:
+             - Path=/api-docs/patients
+          filters:
+             - RewritePath=/api-docs/patients,/v3/api-docs
+
+        - id: api-docs-auth
+          uri: http://auth-service:4003
+          predicates:
+            - Path=/api-docs/auth
+          filters:
+            - RewritePath=/api-docs/auth,/v3/api-docs
+
+logging:
+  level:
+    root: info
+management:
+  endpoint:
+    health:
+      show-details: always

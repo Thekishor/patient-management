@@ -1,0 +1,178 @@
+
+services:
+  patient-service:
+    image: thekishor/patient-service:0.0.1
+    container_name: patient-service
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_URL=${POSTGRES_URL}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=${POSTGRES_DIALECT}
+      - BILLING_SERVICE_ADDRESS=${BILLING_SERVICE_ADDRESS}
+      - BILLING_SERVICE_GRPC_PORT=${BILLING_SERVICE_GRPC_PORT}
+      - SPRING_KAFKA_BOOTSTRAP_SERVER=kafka:9092
+    depends_on:
+      patient-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://patient-service:4000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - patient-management
+
+  api-gateway:
+    image: thekishor/api-gateway:0.0.1
+    container_name: api-gateway
+    ports:
+      - "4004:4004"
+    environment:
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+    networks:
+      - patient-management
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://api-gateway:4004/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  patient-db:
+    image: postgres:17
+    container_name: patient-db
+    ports:
+      - "5001:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - patient_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - patient-management
+    restart: unless-stopped
+
+  auth-service:
+    image: thekishor/auth-service:0.0.1
+    container_name: auth-service
+    ports:
+      - "4003:4003"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_URL=${AUTH_POSTGRES_URL}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=${POSTGRES_DIALECT}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      auth-service-db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://auth-service:4003/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - patient-management
+
+  auth-service-db:
+    image: postgres:17
+    container_name: auth-service-db
+    ports:
+      - "5002:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME} -d ${AUTH_POSTGRES_DB}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - patient-management
+    restart: unless-stopped
+
+  billing-service:
+    image: thekishor/billing-service:0.0.1
+    container_name: billing-service
+    ports:
+      - "4001:4001"
+      - "9001:9001"
+    networks:
+      - patient-management
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://billing-service:4001/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  analytics-service:
+    image: thekishor/analytics-service:0.0.1
+    container_name: analytics-service
+    ports:
+      - "4002:4002"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVER=kafka:9092
+    networks:
+      - patient-management
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://analytics-service:4002/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      - KAFKA_CLUSTER_ID=cluster-02
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - patient-management
+
+networks:
+  patient-management:
+    driver: bridge
+volumes:
+  patient_postgres_data:
+  auth_postgres_data:
+  kafka_data:
